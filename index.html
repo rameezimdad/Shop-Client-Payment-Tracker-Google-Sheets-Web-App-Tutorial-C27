@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top" />
+    <meta charset="utf-8" />
+    <title>Shop & Client Record Manager</title>
+
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+
+    <!-- SweetAlert2 CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
+    />
+
+    <style>
+      /* Body gradient background */
+      body {
+        background: linear-gradient(to right, #f2f2f2, #e6e6e6);
+        margin: 20px;
+      }
+
+      .app-container {
+        background: #fff;
+        border-radius: 8px;
+        padding: 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      /* Table container with max height and scrolling */
+      .table-container {
+        max-height: 400px;
+        overflow-y: auto;
+      }
+
+      .d-none {
+        display: none !important;
+      }
+
+      /* Print styles */
+      @media print {
+        body * {
+          visibility: hidden;
+        }
+        #printArea,
+        #printArea * {
+          visibility: visible;
+        }
+        #printArea {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+        }
+      }
+      @media screen {
+        #printHeader {
+          display: none !important;
+        }
+      }
+      @media print {
+        #printHeader {
+          display: block !important;
+        }
+      }
+
+      .signature-line {
+        border-top: 2px solid #000;
+        margin-top: 50px;
+        width: 200px;
+        text-align: center;
+        padding-top: 5px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container mx-auto">
+      <!-- Main Heading -->
+      <h1 class="text-center text-4xl font-bold my-5">
+        XYZ Company Portal - Shop & Client Management
+      </h1>
+      <p class="text-center text-gray-600 mb-5">
+        Easily search, manage, and record transactions for your shops and clients
+        all in one place.
+      </p>
+
+      <!-- App Container -->
+      <div class="app-container mx-auto">
+
+        <!-- Search Section -->
+        <h2 class="text-2xl font-semibold text-primary mb-3">
+          <i class="fas fa-search"></i> Search by Shop or Client
+        </h2>
+        <div
+          id="searchContainer"
+          class="p-4 mb-4 border rounded bg-light shadow-sm"
+        >
+          <div class="row g-3 align-items-end">
+            <div class="col-md-5">
+              <label class="fw-semibold text-secondary" for="shopInput"
+                >Shop Name</label
+              >
+              <input
+                list="shopList"
+                id="shopInput"
+                class="form-control"
+                placeholder="Select or type shop name"
+              />
+              <datalist id="shopList"></datalist>
+            </div>
+            <div class="col-md-5">
+              <label class="fw-semibold text-secondary" for="clientInput"
+                >Client Name</label
+              >
+              <input
+                list="clientList"
+                id="clientInput"
+                class="form-control"
+                placeholder="Select or type client name"
+              />
+              <datalist id="clientList"></datalist>
+            </div>
+            <div class="col-md-2 text-end">
+              <button onclick="search()" class="btn btn-primary w-100 mb-2">
+                <i class="fas fa-search"></i> Search
+              </button>
+              <!-- This button appears after searching data -->
+              <button
+                type="button"
+                class="btn btn-success w-100 d-none"
+                id="addEntryBtn"
+                data-bs-toggle="modal"
+                data-bs-target="#addFormModal"
+              >
+                <i class="fas fa-plus"></i> Add Entry
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Printable Area -->
+        <div id="printArea">
+          <!-- Print Header (only visible on print) -->
+          <div id="printHeader" class="text-center mb-4">
+            <img
+              src="https://cdn.bio.link/uploads/profile_pictures/2023-04-16/LtkOkQHLljUSvYcfJpKC8NRFH1q3MfXZ.png"
+              alt="Logo"
+              width="120"
+              height="120"
+              class="d-block mx-auto mb-2"
+            />
+            <h3 class="fw-bold">XYZ Company Pvt. Ltd.</h3>
+            <p>Email: info@xyzcompany.com | Phone: +1 (234) 567-890</p>
+            <p>1234 Main Street, City, State, Country</p>
+            <div class="signature-line mx-auto">Authorized Signature</div>
+          </div>
+
+          <!-- Dashboard Stats -->
+          <div id="dashboardContainer" class="row g-3 mb-3 d-none">
+            <div class="col-sm-6 col-md-3">
+              <div class="card text-white bg-primary">
+                <div class="card-body">
+                  <h5 class="card-title">
+                    <i class="fas fa-coins"></i> Total Amount
+                  </h5>
+                  <p id="totalAmount" class="card-text fs-5 fw-bold">0</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-6 col-md-3">
+              <div class="card text-white bg-success">
+                <div class="card-body">
+                  <h5 class="card-title">
+                    <i class="fas fa-arrow-up"></i> Total Credit
+                  </h5>
+                  <p id="totalCredit" class="card-text fs-5 fw-bold">0</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-6 col-md-3">
+              <div class="card text-white bg-danger">
+                <div class="card-body">
+                  <h5 class="card-title">
+                    <i class="fas fa-arrow-down"></i> Total Debit
+                  </h5>
+                  <p id="totalDebit" class="card-text fs-5 fw-bold">0</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-6 col-md-3">
+              <div class="card text-white bg-info">
+                <div class="card-body">
+                  <h5 class="card-title">
+                    <i class="fas fa-balance-scale"></i> Current Balance
+                  </h5>
+                  <p id="currentBalance" class="card-text fs-5 fw-bold">0</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Search Results Table -->
+          <div id="results" class="table-container"></div>
+        </div>
+
+        <!-- Print Button (Hidden by default; appears after data is fetched) -->
+        <div class="my-3 text-end">
+          <button
+            class="btn btn-info d-none"
+            id="printBtn"
+            onclick="printResults()"
+          >
+            <i class="fas fa-print"></i> Print
+          </button>
+        </div>
+      </div>
+
+      <!-- Add Entry Modal -->
+      <div
+        class="modal fade"
+        id="addFormModal"
+        tabindex="-1"
+        aria-labelledby="addFormModalLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="addFormModalLabel">
+                <i class="fas fa-plus"></i> Add a New Entry
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <form id="addForm" onsubmit="event.preventDefault(); addRow();">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label
+                        for="addApplicationNumber"
+                        class="form-label fw-bold"
+                        >Application Number</label
+                      >
+                      <input
+                        type="text"
+                        id="addApplicationNumber"
+                        class="form-control"
+                        required
+                      />
+                    </div>
+                    <div class="mb-3">
+                      <label for="addShopName" class="form-label fw-bold"
+                        >Shop Name</label
+                      >
+                      <input
+                        type="text"
+                        id="addShopName"
+                        class="form-control"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label
+                        for="addClientName"
+                        class="form-label fw-bold"
+                        >Client Name</label
+                      >
+                      <input
+                        type="text"
+                        id="addClientName"
+                        class="form-control"
+                        required
+                      />
+                    </div>
+                    <div class="mb-3">
+                      <label for="addAmount" class="form-label fw-bold"
+                        >Amount</label
+                      >
+                      <input
+                        type="number"
+                        id="addAmount"
+                        class="form-control"
+                        required
+                      />
+                    </div>
+                    <div class="mb-3">
+                      <label for="addType" class="form-label fw-bold"
+                        >Type</label
+                      >
+                      <select id="addType" class="form-select" required>
+                        <option value="Credit">Credit</option>
+                        <option value="Debit">Debit</option>
+                      </select>
+                    </div>
+                    <div class="mb-3">
+                      <label for="addRemarks" class="form-label fw-bold"
+                        >Remarks</label
+                      >
+                      <input
+                        type="text"
+                        id="addRemarks"
+                        class="form-control"
+                        placeholder="Optional"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div class="text-end mt-3">
+                  <button type="submit" class="btn btn-success">
+                    <i class="fas fa-check"></i> Save
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+    ></script>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+      // Hide Print button initially
+      document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("printBtn").classList.add("d-none");
+      });
+
+      // Populate unique shops and clients
+      window.onload = function () {
+        google.script.run
+          .withSuccessHandler(function (shopArray) {
+            const shopList = document.getElementById("shopList");
+            shopList.innerHTML = "";
+            shopArray.forEach(function (shop) {
+              const opt = document.createElement("option");
+              opt.value = shop;
+              shopList.appendChild(opt);
+            });
+          })
+          .getUniqueShops();
+
+        google.script.run
+          .withSuccessHandler(function (clientArray) {
+            const clientList = document.getElementById("clientList");
+            clientList.innerHTML = "";
+            clientArray.forEach(function (client) {
+              const opt = document.createElement("option");
+              opt.value = client;
+              clientList.appendChild(opt);
+            });
+          })
+          .getUniqueClients();
+      };
+
+      // Search function
+      function search() {
+        const shopValue = (
+          document.getElementById("shopInput").value || ""
+        )
+          .trim()
+          .toLowerCase();
+        const clientValue = (
+          document.getElementById("clientInput").value || ""
+        )
+          .trim()
+          .toLowerCase();
+
+        if (!shopValue && !clientValue) {
+          alert("Please enter a Shop Name or Client Name");
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(function (data) {
+            const headers = data[0];
+            const filteredRows = data.filter(function (row, index) {
+              if (index === 0) return false;
+              const shop = (row[2] || "").toString().toLowerCase();
+              const client = (row[3] || "").toString().toLowerCase();
+              if (shopValue && shop.includes(shopValue)) return true;
+              if (clientValue && client.includes(clientValue)) return true;
+              return false;
+            });
+
+            // Build HTML table
+            let html = '<table class="table table-bordered table-striped">';
+            html += "<thead><tr>";
+            headers.forEach(function (hdr) {
+              html += "<th>" + hdr + "</th>";
+            });
+            html += "</tr></thead>";
+            html += "<tbody>";
+            filteredRows.forEach(function (row) {
+              html += "<tr>";
+              row.forEach(function (cell) {
+                html += "<td>" + (cell || "") + "</td>";
+              });
+              html += "</tr>";
+            });
+            html += "</tbody></table>";
+
+            // Display table
+            document.getElementById("results").innerHTML = html;
+
+            // Calculate totals
+            let totalAmount = 0;
+            let totalCredit = 0;
+            let totalDebit = 0;
+
+            filteredRows.forEach(function (row) {
+              const amount = parseFloat(row[4]) || 0;
+              const type = (row[5] || "").toString().toLowerCase();
+              totalAmount += amount;
+              if (type === "credit") totalCredit += amount;
+              if (type === "debit") totalDebit += amount;
+            });
+
+            const currentBalance = totalCredit - totalDebit;
+
+            // Update dashboard
+            document.getElementById("totalAmount").textContent =
+              totalAmount.toFixed(2);
+            document.getElementById("totalCredit").textContent =
+              totalCredit.toFixed(2);
+            document.getElementById("totalDebit").textContent =
+              totalDebit.toFixed(2);
+            document.getElementById("currentBalance").textContent =
+              currentBalance.toFixed(2);
+
+            // Show dashboard and "Add Entry" button
+            document
+              .getElementById("dashboardContainer")
+              .classList.remove("d-none");
+            document.getElementById("addEntryBtn").classList.remove("d-none");
+
+            // Show Print button
+            document.getElementById("printBtn").classList.remove("d-none");
+
+            // Pre-fill add form if relevant
+            document.getElementById("addShopName").value = shopValue
+              ? document.getElementById("shopInput").value
+              : "";
+            document.getElementById("addClientName").value = clientValue
+              ? document.getElementById("clientInput").value
+              : "";
+          })
+          .getData();
+      }
+
+      // Add row function
+      function addRow() {
+        const applicationNumber = document
+          .getElementById("addApplicationNumber")
+          .value.trim();
+        const shopName = document
+          .getElementById("addShopName")
+          .value.trim();
+        const clientName = document
+          .getElementById("addClientName")
+          .value.trim();
+        const amount = document.getElementById("addAmount").value.trim();
+        const type = document.getElementById("addType").value;
+        const remarks = document
+          .getElementById("addRemarks")
+          .value.trim();
+
+        if (!applicationNumber || !shopName || !clientName || !amount) {
+          alert("Please fill all required fields.");
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(function (result) {
+            const slipType =
+              result.type.toLowerCase() === "credit" ? "Credit" : "Debit";
+            const slipHtml = `
+              <div style="text-align:center; margin-bottom: 20px;">
+                <img
+                  src="https://cdn.bio.link/uploads/profile_pictures/2023-04-16/LtkOkQHLljUSvYcfJpKC8NRFH1q3MfXZ.png"
+                  alt="Logo"
+                  width="80"
+                  height="80"
+                  style="display:block; margin:0 auto 10px;"
+                />
+                <h3 style="font-weight:bold; margin:0;">XYZ Company Pvt. Ltd.</h3>
+                <p style="margin:0;">Email: info@xyzcompany.com | Phone: +1 (234) 567-890</p>
+                <p style="margin:0;">1234 Main Street, City, State, Country</p>
+              </div>
+              <table style="border: 1px solid #666; border-collapse: collapse; width:100%; max-width:400px; margin:0 auto;">
+                <tr>
+                  <td style="border:1px solid #666; padding:8px; background:#eee; font-weight:bold;">
+                    S. No.
+                  </td>
+                  <td style="border:1px solid #666; padding:8px;">
+                    ${result.sNo}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="border:1px solid #666; padding:8px; background:#eee; font-weight:bold;">
+                    Application No.
+                  </td>
+                  <td style="border:1px solid #666; padding:8px;">
+                    ${result.applicationNumber}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="border:1px solid #666; padding:8px; background:#eee; font-weight:bold;">
+                    Shop Name
+                  </td>
+                  <td style="border:1px solid #666; padding:8px;">
+                    ${result.shopName}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="border:1px solid #666; padding:8px; background:#eee; font-weight:bold;">
+                    Client Name
+                  </td>
+                  <td style="border:1px solid #666; padding:8px;">
+                    ${result.clientName}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="border:1px solid #666; padding:8px; background:#eee; font-weight:bold;">
+                    Amount
+                  </td>
+                  <td style="border:1px solid #666; padding:8px;">
+                    ${result.amount}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="border:1px solid #666; padding:8px; background:#eee; font-weight:bold;">
+                    Type
+                  </td>
+                  <td style="border:1px solid #666; padding:8px;">
+                    ${result.type}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="border:1px solid #666; padding:8px; background:#eee; font-weight:bold;">
+                    Remarks
+                  </td>
+                  <td style="border:1px solid #666; padding:8px;">
+                    ${result.remarks || ""}
+                  </td>
+                </tr>
+              </table>
+            `;
+
+            Swal.fire({
+              title: slipType + " Slip",
+              html: slipHtml,
+              showCancelButton: true,
+              confirmButtonText: "Print",
+              cancelButtonText: "Close",
+            }).then((swalResult) => {
+              if (swalResult.isConfirmed) {
+                const slipWindow = window.open(
+                  "",
+                  "PRINT",
+                  "width=600,height=600"
+                );
+                slipWindow.document.write(
+                  `<html><head><title>Slip Print</title></head><body>${slipHtml}</body></html>`
+                );
+                slipWindow.document.close();
+                slipWindow.focus();
+                slipWindow.print();
+                slipWindow.close();
+              }
+            });
+
+            const modalEl = document.getElementById("addFormModal");
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            modalInstance.hide();
+            document.getElementById("addForm").reset();
+
+            // Re-run search to refresh the data
+            search();
+          })
+          .addData(shopName, clientName, applicationNumber, amount, type, remarks);
+      }
+
+      // Print results
+      function printResults() {
+        window.print();
+      }
+    </script>
+  </body>
+</html>
